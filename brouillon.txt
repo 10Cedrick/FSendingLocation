@@ -1,0 +1,151 @@
+Formulaire: 
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+
+import * as FileSystem from 'expo-file-system';
+
+const FormComponent = () => {
+    const [ipAddress, setIpAddress] = useState('')
+
+    const handleSubmit = () => {
+    }
+
+    const saveIpAddress = async () => {
+      
+
+    }
+    return(
+        <View style={styles.container}>
+            <Text style={styles.label}>IP du serveur :</Text>
+            <TextInput
+            style={styles.input}
+            placeholder="ex : 198.168.96.2"
+            onChangeText={(text) => setIpAddress(text)}
+            value={ipAddress}
+            />
+            <Button title="Start localisation" onPress={handleSubmit} style={styles.button}/>
+        </View>
+    )
+
+}
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    label: {
+      fontSize: 18,
+      marginBottom: 5,
+    },
+    ipAddress: {
+      fontSize: 16,
+      marginBottom: 15,
+      color: 'gray',
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: '#ccc',
+      borderRadius: 5,
+      padding: 10,
+      width: '80%',
+      marginBottom: 15,
+    },
+    button: {
+        paddingVertical: 70, 
+        paddingHorizontal: 52, 
+      },
+  });
+
+  export default FormComponent;
+
+
+localisation
+import React, {useState, useEffect} from 'react'
+import { Text, View, StyleSheet } from 'react-native';
+import * as Location from 'expo-location';
+import axios from 'axios'
+const PageLocation =() => {
+  const [location, setLocation] = useState(null)
+  const [ipAddress, setIpAddress] = useState('')
+
+  const fetchIPFromFiles = () => {
+    setIpAddress()
+  }
+
+  useEffect(() => {
+    fetchIPFromFiles()
+  })
+  const sendData = async (data) => {
+        try{
+            const url = ipAddress + "/position"
+            const res = await axios.post(url, data)
+            
+        }catch (error){
+            console.error(error);
+        }
+    }
+
+
+   
+    useEffect(() => {( async () => {
+        const { status } = await Location.requestForegroundPermissionsAsync()
+        if (status !== 'granted') {
+          console.log('Permission to access location was denied')
+        } else {
+          const locationSubscription = await Location.watchPositionAsync({
+                accuracy: Location.Accuracy.High,
+                timeInterval: 1000,
+                distanceInterval: 1,
+          }, async (location) => {
+            setLocation(location)
+            console.log('New location update: ' + location.coords.latitude + ', ' + location.coords.longitude)
+            // appel sendData
+            const data = {
+                'gpsDeviceId' : 'gps3333',
+                'lng': location.coords.longitude,
+                'lat': location.coords.latitude
+            }     
+            await sendData(data)
+          })
+        } return () => locationSubscription.remove()
+      })()}, []);
+
+      useEffect(() => {
+        
+
+        
+        })
+
+      return (
+        <View style={styles.container}>
+          <Text style={styles.centeredText}>Expo Location</Text>
+          {location ? (
+            <View>
+                <Text style={styles.centeredText}>
+                  latitude: {location.coords.latitude} 
+                </Text>
+                <Text style={styles.centeredText}>
+                  longitude: {location.coords.longitude}
+              </Text>
+            </View>
+            
+          ): (<View><Text style={styles.centeredText}>Loading position</Text></View>)}
+        </View>
+      );
+}
+
+
+const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    centeredText: {
+      fontSize: 20,
+      textAlign: 'center',
+    },
+  });
+
+export default PageLocation
