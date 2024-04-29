@@ -4,15 +4,26 @@ import Header from './src/component/header';
 import LocationComponent from './src/component/LocationComponent';
 import {View, Text, StyleSheet } from 'react-native'
 import * as Location from 'expo-location';
-import axios from 'axios'
-
+import { sendData } from './src/utils/function';
 export default function App() {
   const [ipAddress, setIpAddress] = useState('')
   const [isLocating, setIsLocating] = useState(false)
   const [location, setLocation] = useState(null)
   const [status, setStatus] = useState('')
   
-  /*Request Location Permission */
+  /*Request Location Permission : call in useEffect */
+  const requestLocationPermission = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        setStatus(status)
+        if (status !== 'granted') {
+          Alert.alert('Permission refusée', 'L\'application a besoin de votre permission pour accéder à votre position.');
+        }
+        
+      } catch (error) {
+        console.error('Erreur de permission:', error);
+      }
+  };
   useEffect(() => {
     requestLocationPermission();
   }, []);
@@ -28,12 +39,45 @@ export default function App() {
     // console.log(ipAdress)
   }, [ipAddress])
 
+  useEffect(() => {(async () => 
+    {
+      if(isLocating == true){
+        if (status !== 'granted') {
+          console.log('Permission to access location was denied')
+        } 
+        else
+        {
+          const locationSubscription = await Location.watchPositionAsync({
+              accuracy: Location.Accuracy.High,
+                timeInterval: 1000,
+                distanceInterval: 1,
+          }, async (newLocation) => {
+              console.log(newLocation);
+            // changing the value in state location
+              //setLocation(newLocation)
+            // construct the data to send  
+              // const data = {
+              //   'gpsDeviceId' : 'gps222222',
+              //   'lng': newLocation.coords.longitude,
+              //   'lat': newLocation.coords.latitude
+              // }
+              // console.log("ipAdress ***" + ipAddress)
+              // send the data
+              //await sendData(ipAddress, data)
+          })
+        }
+        return () => locationSubscription.remove()
+      }
+    })()}, [isLocating, location])
+
+
   useEffect(() => {
-    // console.log("**** isLocating")
-    // console.log(isLocating)
-  }, [isLocating])
-
-
+    if(location != null){
+        console.log('**** new location ****')
+        console.log(location.coords.longitude + ',' + location.coord.latitude)
+    }
+    
+  }, [location])
   const handleChangeIp = (newIP) => {
     setIpAddress(newIP)
   }
@@ -47,36 +91,17 @@ export default function App() {
     setLocation(newLocation)
   }
 
-  
-  const requestLocationPermission = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      setStatus(status)
-      if (status !== 'granted') {
-        Alert.alert('Permission refusée', 'L\'application a besoin de votre permission pour accéder à votre position.');
-      }
-      
-    } catch (error) {
-      console.error('Erreur de permission:', error);
-    }
-  };
 
 
-  const sendData = async (data) => {
-    try{
-        const url = ipAddress + "/position"
-        const res = await axios.post(url, data)
-        
-    }catch (error){
-        console.error(error);
-    }
-  }
+
+
+
   return (
       <View style={styles.container}>
         <Header stopLocating={stopLocating}/>
         <View style={styles.formContainer}>
           {isLocating ? 
-            (<LocationComponent location={location} changeLocation={changeLocation} /> ) : 
+            (<LocationComponent location={location}/> ) : 
             ( <FormulaireComponent ipAddress={ipAddress} handleChangeIp={handleChangeIp} startLocating={startLocating}/>
           )} 
           
