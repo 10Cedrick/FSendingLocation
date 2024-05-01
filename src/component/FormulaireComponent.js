@@ -1,17 +1,16 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 
 import {View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native'
-function FormulaireComponent({ipAddress, handleChangeIp, startLocating}) {
+function FormulaireComponent({ipAddress, handleChangeIp, storeServerAdress, startLocating}) {
+  const [valueForm, setValueForm] = useState('')
     
-
-    const handleSubmit = () => {
+    
+    const handleSubmit = async () => {
+      await storeServerAdress()
       startLocating()
     }
 
-    const saveIpAddress = async () => {
-      
-
-    }
+    
   return (
     <View style={styles.container}>
         <Text style={styles.label}>IP du serveur :</Text>

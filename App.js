@@ -3,8 +3,10 @@ import FormulaireComponent from './src/component/FormulaireComponent';
 import Header from './src/component/header';
 import LocationComponent from './src/component/LocationComponent';
 import {View, StyleSheet } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import { sendData } from './src/utils/function';
+
+
 export default function App() {
   const [ipAddress, setIpAddress] = useState('')
   const [isLocating, setIsLocating] = useState(false)
@@ -26,10 +28,24 @@ export default function App() {
       }
   };
  
+  const storeServerAdress = async () => {
+    try{
+      await AsyncStorage.setItem('ipAdress', ipAddress);
+      /*
+      ***** Test Async Storage *****
+      const savedIP = await AsyncStorage.getItem('ipAdress')
+      console.log('Ip adress saved successfully : ' + savedIP);*/ 
+    }catch(error){
+      console.error('Error while saving ipAdress: ', error);
+    }
+  }
 
-  const handleChangeIp = (newIP) => {
+  
+
+  const handleChangeIp = async (newIP) => {
     setIpAddress(newIP)
   }
+  
   const startLocating = () => {
     setIsLocating(true)
   }
@@ -59,56 +75,70 @@ export default function App() {
 
 
 //localisation functionnality
+
+  //Load Server Ip
+    useEffect(() => {
+      const loadServerIp = async () => {
+        try{
+          const savedIP = await AsyncStorage.getItem('ipAdress')
+          if(savedIP !== null){
+            setIpAddress(savedIP)
+          }
+        }catch (error){
+          console.error("Error loading server Ip", error);
+        }
+      }
+      loadServerIp()
+    }, [])
+
   //Request Location Permission
-  useEffect(() => {
-    requestLocationPermission();
-  }, []);
+    useEffect(() => {
+      requestLocationPermission();
+    }, []);
 
   //Start Location Updates
-  useEffect(() => {
-    let locationSubscription
+    useEffect(() => {
+      let locationSubscription
 
-    const startWatching = async () => {
-      if(status !== 'granted'){
-          console.log("Permission to access location was denied")
-      }else{
-          try{
-            locationSubscription = Location.watchPositionAsync(
-              {
-                accuracy: Location.Accuracy.BestForNavigation,
-                timeInterval: 1000, // 1 second
-                distanceInterval: 10, // 10 meters
-              },
-              (newLocation) => {
-                setLocation(newLocation);
-              }
-            );
-          }catch (error){
-            console.error('Error starting location updates:', error)
-          }
+      const startWatching = async () => {
+        if(status !== 'granted'){
+            console.log("Permission to access location was denied")
+        }else{
+            try{
+              locationSubscription = await Location.watchPositionAsync(
+                {
+                  accuracy: Location.Accuracy.BestForNavigation,
+                  timeInterval: 1000, // 1 second
+                  distanceInterval: 1, // 10 meters
+                },
+                (newLocation) => {
+                  setLocation(newLocation);
+                }
+              );
+            }catch (error){
+              console.error('Error starting location updates:', error)
+            }
+        }
       }
-    }
 
-    if(isLocating){
-      startWatching()
-    }
-    else{
-      if(locationSubscription){
-        locationSubscription.remove()
+      if(isLocating){
+        startWatching()
       }
-    }
-
-    return () => {
-      if (locationSubscription) {
-        locationSubscription.remove(); // Clean up subscription on unmount
+      else{
+        if(locationSubscription){
+          locationSubscription.remove()
+        }
       }
-    }
-  }, [isLocating])
+
+      return () => {
+        if (locationSubscription) {
+          locationSubscription.remove(); // Clean up subscription on unmount
+        }
+      }
+    }, [isLocating])   
 
 
-
-
-
+  
 
 
 
@@ -120,7 +150,7 @@ export default function App() {
         <View style={styles.formContainer}>
           {isLocating ? 
             (<LocationComponent location={location} stopLocating={stopLocating}/> ) : 
-            (<FormulaireComponent ipAddress={ipAddress} handleChangeIp={handleChangeIp} startLocating={startLocating}/>
+            (<FormulaireComponent ipAddress={ipAddress} handleChangeIp={handleChangeIp} storeServerAdress={storeServerAdress} startLocating={startLocating}/>
           )} 
           
         </View>
