@@ -2,9 +2,11 @@ import React from 'react'
 import {View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import Icon from 'react-native-vector-icons/Ionicons';
 
-function LocationComponent({location}) {
+function LocationComponent({location, stopLocating}) {
   const handleSubmit = () => {
+    stopLocating()
   }
+
   return (
     <View style={styles.container}>
       <Icon name="location-sharp" size={200} color="#9370DB" />
