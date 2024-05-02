@@ -149,3 +149,81 @@ const styles = StyleSheet.create({
   });
 
 export default PageLocation
+
+
+
+
+
+if (status !== 'granted') {
+          console.log('Permission to access location was denied')
+        } 
+        else
+        {
+          const locationSubscription = await Location.watchPositionAsync({
+              accuracy: Location.Accuracy.High,
+              timeInterval: 1000,
+              distanceInterval: 1,
+          }, async (newLocation) => {
+              console.log(newLocation);
+
+            // changing the value in state location
+              setLocation(newLocation)
+            // construct the data to send  
+              // const data = {
+              //   'gpsDeviceId' : 'gps222222',
+              //   'lng': newLocation.coords.longitude,
+              //   'lat': newLocation.coords.latitude
+              // }
+              // console.log("ipAdress ***" + ipAddress)
+              // send the data
+              //await sendData(ipAddress, data)
+          })
+        }
+        return () => locationSubscription.remove()
+
+
+
+  //Load Server Ip
+  useEffect(() => {
+    const loadServerIp = async () => {
+      try{
+        const savedIP = await AsyncStorage.getItem('ServerIp')
+        if(savedIP !== null){
+          setIpAddress(savedIP)
+        }
+      }catch (error){
+        console.error("Error loading server Ip", error);
+      }
+    }
+    loadServerIp()
+  })
+
+
+
+
+//Track position 
+  useEffect(() => {
+    const sendPosition = async () => {
+      if(location){
+        //console.log('New location Tracked :');
+        //console.log(location);
+        //prepare the data
+
+        const data = {
+          'gpsDeviceId' : 'gps222222',
+          'lng': location.coords.longitude,
+          'lat': location.coords.latitude
+        }
+
+        try{
+          const url = ipAddress + "/api/positions"
+          console.log(url);
+          const res = await axios.post(url, data) 
+          
+        }catch (error){
+          console.error(error);
+        }
+      }
+    }
+    sendPosition()
+  }, [location])
